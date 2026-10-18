@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: retail_postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: retail_intelligence
+      POSTGRES_USER: retail_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "127.0.0.1:5433:5432"
+
+    volumes:
+      - retail_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U retail_user -d retail_intelligence
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  retail_postgres_data:
