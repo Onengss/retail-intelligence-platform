@@ -1,0 +1,2 @@
+total_rows,duplicate_rows,negative_quantity_rows,zero_price_rows,negative_price_rows,cancelled_rows,unique_invoices,unique_customers,unique_products
+1067371,34335,22950,6202,5,19494,53628,5942,5305
