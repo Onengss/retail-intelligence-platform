@@ -1,2 +1,2 @@
-original_rows,valid_sales_rows,customer_rows,excluded_from_sales,cancelled_rows,negative_quantity_rows,non_positive_price_rows,duplicate_rows_flagged,extreme_quantity_rows,gross_positive_sales
-1067371,1041670,805549,25701,19494,22950,6207,34335,503,20972594.567999996
+original_rows,valid_sales_rows,merchandise_rows,non_merchandise_rows,merchandise_revenue,customer_rows,excluded_from_sales,cancelled_rows,negative_quantity_rows,non_positive_price_rows,duplicate_rows_flagged,extreme_quantity_rows,gross_positive_sales
+1067371,1041670,1037428,4242,20147064.967,805549,25701,19494,22950,6207,34335,503,20972594.567999996
