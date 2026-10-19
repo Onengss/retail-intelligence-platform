@@ -12,6 +12,8 @@ from sqlalchemy.engine import URL
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(BASE_DIR / ".env")
+DATA_SOURCE = os.getenv("DATA_SOURCE", "csv").lower()
+DASHBOARD_DATA_DIR = BASE_DIR / "dashboard" / "data"
 
 st.set_page_config(
     page_title="Retail Intelligence Platform",
@@ -41,6 +43,19 @@ def get_engine():
 
 @st.cache_data(ttl=600)
 def load_overview():
+    if DATA_SOURCE == "csv":
+        kpi = pd.read_csv(
+            DASHBOARD_DATA_DIR / "overview_kpi.csv"
+        )
+        monthly = pd.read_csv(
+            DASHBOARD_DATA_DIR / "overview_monthly.csv",
+            parse_dates=["month"],
+        )
+        countries = pd.read_csv(
+            DASHBOARD_DATA_DIR / "overview_countries.csv"
+        )
+        return kpi, monthly, countries
+
     engine = get_engine()
 
     kpi_query = """
@@ -85,22 +100,28 @@ def load_overview():
 
 @st.cache_data(ttl=600)
 def load_customer_segments():
-    engine = get_engine()
-    query = """
-        SELECT
-            segment,
-            COUNT(*) AS customers,
-            SUM(monetary)::float AS revenue,
-            AVG(recency)::float AS avg_recency,
-            AVG(frequency)::float AS avg_frequency,
-            AVG(monetary)::float AS avg_spend
-        FROM customer_rfm
-        GROUP BY segment
-        ORDER BY revenue DESC
-    """
+    if DATA_SOURCE == "csv":
+        segments = pd.read_csv(
+            DASHBOARD_DATA_DIR / "customer_segments.csv"
+        )
+    else:
+        engine = get_engine()
+        query = """
+            SELECT
+                segment,
+                COUNT(*) AS customers,
+                SUM(monetary)::float AS revenue,
+                AVG(recency)::float AS avg_recency,
+                AVG(frequency)::float AS avg_frequency,
+                AVG(monetary)::float AS avg_spend
+            FROM customer_rfm
+            GROUP BY segment
+            ORDER BY revenue DESC
+        """
 
-    with engine.connect() as conn:
-        segments = pd.read_sql_query(query, conn)
+        with engine.connect() as conn:
+            segments = pd.read_sql_query(query, conn)
+        engine.dispose()
 
     if segments.empty:
         return segments
@@ -171,7 +192,7 @@ if page == "Sales Overview":
     try:
         kpi, monthly, countries = load_overview()
     except Exception as exc:
-        st.error("Unable to connect to PostgreSQL.")
+        st.error(f"Unable to load Sales Overview data from {DATA_SOURCE}.")
         st.exception(exc)
         st.stop()
 
