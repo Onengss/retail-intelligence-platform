@@ -1,8 +1,16 @@
 .venv/
 __pycache__/
+*.py[cod]
 .ipynb_checkpoints/
 .pytest_cache/
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+
+.vscode/
+.idea/
 
 data/raw/
 data/interim/
@@ -12,5 +20,21 @@ mlruns/
 mlartifacts/
 *.joblib
 *.pkl
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Model artifacts
+artifacts/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Generated forecast predictions
+reports/baseline_predictions.csv
+reports/forecast_test_evaluation.csv
+reports/random_forest_predictions.csv
 
 .DS_Store

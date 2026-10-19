@@ -8,6 +8,14 @@ INPUT_FILE = BASE_DIR / "data" / "interim" / "retail_combined.csv"
 OUTPUT_DIR = BASE_DIR / "data" / "processed"
 REPORT_DIR = BASE_DIR / "reports"
 
+NON_MERCHANDISE_CODES = {
+    "M",
+    "DOT",
+    "POST",
+    "AMAZONFEE",
+    "BANK CHARGES",
+}
+
 
 def clean_data():
     print("=" * 60)
@@ -52,7 +60,7 @@ def clean_data():
     # Identify unusually large quantities for review
     df["extreme_quantity"] = df["Quantity"].abs() > 1000
 
-    # Valid positive merchandise sales
+    # Valid positive sales
     valid_sales = (
         ~df["is_cancelled"]
         & ~df["is_return_or_adjustment"]
@@ -62,6 +70,14 @@ def clean_data():
     )
 
     sales = df.loc[valid_sales].copy()
+    sales["is_non_merchandise"] = (
+        sales["StockCode"]
+        .str.upper()
+        .isin(NON_MERCHANDISE_CODES)
+    )
+    merchandise = sales.loc[
+        ~sales["is_non_merchandise"]
+    ].copy()
 
     # Feature engineering
     sales["Revenue"] = sales["Quantity"] * sales["Price"]
@@ -69,6 +85,14 @@ def clean_data():
     sales["Year"] = sales["InvoiceDate"].dt.year
     sales["Month"] = sales["InvoiceDate"].dt.month
     sales["DayOfWeek"] = sales["InvoiceDate"].dt.dayofweek
+
+    merchandise["Revenue"] = (
+        merchandise["Quantity"] * merchandise["Price"]
+    )
+    merchandise["Date"] = merchandise["InvoiceDate"].dt.date
+    merchandise["Year"] = merchandise["InvoiceDate"].dt.year
+    merchandise["Month"] = merchandise["InvoiceDate"].dt.month
+    merchandise["DayOfWeek"] = merchandise["InvoiceDate"].dt.dayofweek
 
     # Customer segmentation dataset
     customers = sales.loc[
@@ -88,11 +112,22 @@ def clean_data():
         OUTPUT_DIR / "retail_customers.csv",
         index=False
     )
+    merchandise.to_csv(
+        OUTPUT_DIR / "retail_merchandise.csv",
+        index=False
+    )
 
     # Quality summary
     summary = {
         "original_rows": original_rows,
         "valid_sales_rows": len(sales),
+        "merchandise_rows": len(merchandise),
+        "non_merchandise_rows": int(
+            sales["is_non_merchandise"].sum()
+        ),
+        "merchandise_revenue": float(
+            merchandise["Revenue"].sum()
+        ),
         "customer_rows": len(customers),
         "excluded_from_sales": original_rows - len(sales),
         "cancelled_rows": int(df["is_cancelled"].sum()),
@@ -123,6 +158,7 @@ def clean_data():
     print("\nOutput files:")
     print(OUTPUT_DIR / "retail_sales.csv")
     print(OUTPUT_DIR / "retail_customers.csv")
+    print(OUTPUT_DIR / "retail_merchandise.csv")
 
     return sales, customers
 
